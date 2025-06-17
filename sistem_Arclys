@@ -1,0 +1,128 @@
+import 'dart:io';
+import 'dart:collection'; 
+import 'pelanggan.dart';
+import 'transaksi.dart';
+import 'produk.dart';
+
+class SistemArclys {
+  List<Transaksi> daftarTransaksiDiproses = [];
+  Queue<Transaksi> antrianTransaksi = Queue<Transaksi>(); 
+  List<Pelanggan> daftarPelanggan = [];
+
+  void jalankanMenu() {
+    String? pilihan;
+    do {
+      print('\n================= Sistem Arclys_PPOB =================');
+      print('1. Lihat Daftar Produk');
+      print('2. Tambah Transaksi');
+      print('3. Proses Transaksi');
+      print('4. Lihat Transaksi Sudah Diproses');
+      print('5. Lihat Riwayat Transaksi');
+      print('6. Keluar');
+      stdout.write('Masukkan pilihan (1-6): ');
+      pilihan = stdin.readLineSync();
+
+      switch (pilihan) {
+        case '1':
+          Produk.tampilkanProduk();
+          break;
+        case '2':
+          tambahTransaksi();
+          break;
+        case '3':
+          prosesTransaksi();
+          break;
+        case '4':
+          tampilkanTransaksiSudahDiproses();
+          break;
+        case '5':
+          lihatRiwayatTransaksi();
+          break;
+        case '6':
+          print('Terima kasih! Sistem selesai.');
+          break;
+        default:
+          print('Pilihan tidak valid. Coba lagi.');
+      }
+    } while (pilihan != '6');
+  }
+
+  void tambahTransaksi() {
+    stdout.write('Masukkan nama pelanggan: ');
+    String nama = stdin.readLineSync() ?? '';
+
+    stdout.write('Masukkan nomor HP pelanggan: ');
+    String nomorHp = stdin.readLineSync() ?? '';
+
+    stdout.write('Masukkan kode produk: ');
+    String kodeProduk = stdin.readLineSync()?.toUpperCase() ?? '';
+
+    if (!Produk.produkBerdasarkanKategori.values
+        .expand((produk) => produk.keys)
+        .contains(kodeProduk)) {
+      print('Kode produk tidak ditemukan.');
+      return;
+    }
+
+    Pelanggan? pelanggan = daftarPelanggan.firstWhere(
+      (p) => p.nama == nama && p.nomorHp == nomorHp,
+      orElse: () {
+        Pelanggan baru = Pelanggan(nama, nomorHp);
+        daftarPelanggan.add(baru);
+        return baru;
+      },
+    );
+
+    Transaksi transaksi = Transaksi(pelanggan, kodeProduk);
+    pelanggan.tambahTransaksi(transaksi);
+    antrianTransaksi.add(transaksi); // Menggunakan metode add milik Queue
+    print('Transaksi berhasil ditambahkan ke antrian.');
+  }
+
+  void prosesTransaksi() {
+    if (antrianTransaksi.isEmpty) {
+      print('Tidak ada transaksi yang menunggu diproses.');
+      return;
+    }
+
+    Transaksi transaksi = antrianTransaksi.removeFirst(); // Menggunakan removeFirst milik Queue
+    daftarTransaksiDiproses.add(transaksi);
+
+    print('Transaksi berhasil diproses:');
+    print(transaksi.informasiTransaksi());
+  }
+
+  void tampilkanTransaksiSudahDiproses() {
+    if (daftarTransaksiDiproses.isEmpty) {
+      print('Belum ada transaksi yang diproses.');
+      return;
+    }
+
+    print('\n================= Daftar Transaksi Sudah Diproses =================');
+    for (var i = 0; i < daftarTransaksiDiproses.length; i++) {
+      print('${i + 1}. ${daftarTransaksiDiproses[i].informasiTransaksi()}');
+    }
+  }
+
+  void lihatRiwayatTransaksi() {
+    stdout.write('Masukkan nama pelanggan: ');
+    String nama = stdin.readLineSync() ?? ''; 
+
+    stdout.write('Masukkan nomor HP pelanggan: ');
+    String nomorHp = stdin.readLineSync() ?? '';
+
+    Pelanggan? pelanggan;
+    for (var p in daftarPelanggan) {
+      if (p.nama == nama && p.nomorHp == nomorHp) {
+        pelanggan = p;
+        break;
+      }
+    }
+
+    if (pelanggan == null) {
+      print('Pelanggan tidak ditemukan.');
+    } else {
+      pelanggan.tampilkanRiwayatTransaksi();
+    }
+  }
+}
